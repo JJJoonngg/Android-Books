@@ -11,7 +11,8 @@ import org.junit.Assert.*
  */
 class ExampleUnitTest {
     @Test
-    fun addition_isCorrect() {
-        assertEquals(4, 2 + 2)
+    fun testHelloWorld() {
+        val myComponent: MyComponent = DaggerMyComponent.create()
+        println("result = ${myComponent.getString()}")
     }
 }
