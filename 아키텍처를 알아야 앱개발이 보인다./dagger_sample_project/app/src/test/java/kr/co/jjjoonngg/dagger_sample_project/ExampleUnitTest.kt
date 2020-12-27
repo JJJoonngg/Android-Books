@@ -14,5 +14,7 @@ class ExampleUnitTest {
     fun testHelloWorld() {
         val myComponent: MyComponent = DaggerMyComponent.create()
         println("result = ${myComponent.getString()}")
+
+        println("nullable check = ${myComponent.getInt()}")
     }
 }

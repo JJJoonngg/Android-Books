@@ -13,4 +13,6 @@ class MyModule {
     @Provides
     fun provideHelloWorld(): String = "Hello World"
 
+    @Provides
+    fun provideInteger(): Int? = null
 }
