@@ -266,3 +266,95 @@ World
 
 ---
 
+
+
+## 10.범위 지정하기
+
+각 컴포넌트는 `@Scope` 애노테이션과 함께 범위를 지정할 수 있음
+
+컴포넌트의 구현과 함께 각 컴포넌트 인스턴스는 의존성의 제공 방법에 대한 동일성을 보장받을 수 있다. 하나의 인스턴스만 만들어서 참조하는 싱글턴 패턴과 비슷한 개념이지만, 애플리케이션의 생명 주기와 달리 생명 주기를 따로 관리할 수 있다는 점에서 차이가 있다고 볼 수 있다.
+
+
+
+### @Singleton 사용하기
+
+일반적으로 `@Singeton` 애노테이션을 사용하여 범위를 지정하여 객체를 재사용할 수 있다.
+
+```kotlin
+@Singleton
+@Component(modules =[MyModule::class])
+interface MyComponent{
+		fun getObject() : Object
+}
+```
+
+```kotlin
+@Module
+class MyModule{
+		@Provides
+		@Singleton
+		fun provideObject() = Object()
+}
+```
+
+컴포넌트와 메서드에 `@Singleton` 을 추가한 후 테스트 코드를 통해 동일한 인스턴스를 제공받을 수 있는지 확인해 본다.
+
+```kotlin
+@Test
+fun testObjectIdentity(){
+		val myComponent = DaggetMyComponent.create()
+		val temp1 = myComponent.getObject()
+		val temp2 = myComponent.getObject()
+		asertNotNull(temp1)
+		asertNotNull(temp2)
+		assertSame(temp1, temp2)
+}
+```
+
+```
+결과
+326549596
+326549596
+true
+```
+
+
+
+
+
+### @Reusable 사용하기
+
+`@Reusable`도 `@Singleton` 을 비롯한 다른 커스텀 스코프와 비슷한 역할을 함
+
+특정 컴포넌트 스코프에 종속되지 않아 컴포넌트에 `@Reusable` 을 선언하지 않아도 됨
+
+다른 스코프 애노테이션 처럼 인스턴스의 동일성을 보장하진 않지만, 항상 동일한 인스턴스를 사용해야 하는 게 아니라면 메모리 관리 측면에서 조금 더 효율적
+
+
+
+
+
+### @Scope 확장하기
+
+커스텀 스코프를 직접 만들어 컴포넌트의 범위를 지정할 수 있다.
+
+```kotlin
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
+annotation class UserScope{
+}
+```
+
+```kotlin
+@Module
+class MyModule{
+		@Provides
+		@UserScope
+		fun provideObejct() = Object()
+}
+```
+
+
+
+---
+
