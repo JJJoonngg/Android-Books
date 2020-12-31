@@ -1,5 +1,7 @@
 package kr.co.jjjoonngg.dagger_sample_project
 
+import kr.co.jjjoonngg.dagger_sample_project.mapmultibinding.abstracttest.DaggerMultibindsComponent
+import kr.co.jjjoonngg.dagger_sample_project.mapmultibinding.abstracttest.MultibindsComponent
 import kr.co.jjjoonngg.dagger_sample_project.mapmultibinding.inheritance.DaggerParentComponent
 import kr.co.jjjoonngg.dagger_sample_project.setmultibinding.DaggerSetComponent
 import kr.co.jjjoonngg.dagger_sample_project.setmultibinding.Foo
@@ -35,5 +37,15 @@ class MultibindingTest {
             println(itr.next())
         }
 
+    }
+
+    @Test
+    fun testMultibinds() {
+        val component: MultibindsComponent = DaggerMultibindsComponent.create()
+
+        //empty
+        for (s in component.getStrings()) {
+            println(s)
+        }
     }
 }
