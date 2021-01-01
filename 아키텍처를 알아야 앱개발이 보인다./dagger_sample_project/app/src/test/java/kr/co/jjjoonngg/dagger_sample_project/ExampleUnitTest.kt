@@ -1,9 +1,10 @@
 package kr.co.jjjoonngg.dagger_sample_project
 
 import dagger.MembersInjector
+import kr.co.jjjoonngg.dagger_sample_project.daggerbase.DaggerMyComponent
+import kr.co.jjjoonngg.dagger_sample_project.daggerbase.MyClass
+import kr.co.jjjoonngg.dagger_sample_project.daggerbase.MyComponent
 import org.junit.Test
-
-import org.junit.Assert.*
 
 /**
  * Example local unit test, which will execute on the development machine (host).

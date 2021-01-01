@@ -1,4 +1,4 @@
-package kr.co.jjjoonngg.dagger_sample_project
+package kr.co.jjjoonngg.dagger_sample_project.daggerbase
 
 import dagger.Module
 import dagger.Provides
