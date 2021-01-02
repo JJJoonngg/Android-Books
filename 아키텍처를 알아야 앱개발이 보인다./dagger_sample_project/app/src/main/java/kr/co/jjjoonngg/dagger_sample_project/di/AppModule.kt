@@ -1,21 +1,31 @@
 package kr.co.jjjoonngg.dagger_sample_project.di
 
-import android.content.Context
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
-import kr.co.jjjoonngg.dagger_sample_project.App
-import kr.co.jjjoonngg.dagger_sample_project.main.MainActivityComponent
+import dagger.android.AndroidInjector
+import dagger.multibindings.ClassKey
+import dagger.multibindings.IntoMap
+import kr.co.jjjoonngg.dagger_sample_project.main.MainActivity
+import kr.co.jjjoonngg.dagger_sample_project.main.MainActivitySubcomponent
+import javax.inject.Named
 import javax.inject.Singleton
 
 /*
 * Created by JJJoonngg
 */
 
-@Module(subcomponents = [MainActivityComponent::class])
-class AppModule {
+@Module(subcomponents = [MainActivitySubcomponent::class])
+abstract class AppModule {
+    @Binds
+    @IntoMap
+    @ClassKey(MainActivity::class)
+    abstract fun bindAndroidInjectorFactory(factory: MainActivitySubcomponent.Factory): AndroidInjector.Factory<*>
 
-//    @Provides
-//    @Singleton
-//    fun provideSharedPreferences(app: App) =
-//        app.getSharedPreferences("default", Context.MODE_PRIVATE)
+    companion object {
+        @Named("app")
+        @Provides
+        @Singleton
+        fun provideString() = "String from AppModule"
+    }
 }

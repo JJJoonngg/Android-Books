@@ -15,34 +15,25 @@ import javax.inject.Named
 * Created by JJJoonngg
 */
 
-@Module
-class MainFragmentModule {
-    @Provides
-    fun provideInt() = Random().nextInt()
-}
-
 class MainFragment : Fragment() {
-//    @Inject
-//    lateinit var sharedPreferences: SharedPreferences
 
     @Inject
-    lateinit var activityName: String
+    @Named("app")
+    lateinit var appString: String
 
-    @set: [Inject Named("int")]
-    var randomNumber: Int? = null
+    @Inject
+    @Named("activity")
+    lateinit var activityString: String
+
+    @Inject
+    @Named("fragment")
+    lateinit var fragmentString: String
 
     override fun onAttach(context: Context) {
+        AndroidSupportInjection.inject(this)
+        Log.e("MainFragment", appString)
+        Log.e("MainFragment", activityString)
+        Log.e("MainFragment", fragmentString)
         super.onAttach(context)
-        if (activity is MainActivity) {
-            (activity as MainActivity).getComponent()
-                .mainFragmentComponentBuilder()
-                .setModule(MainFragmentModule())
-                .setFragment(this)
-                .build()
-                .inject(this)
-        }
-
-        Log.d("MainFragment", activityName)
-        Log.d("MainFragment", "randomNumber = $randomNumber")
     }
 }

@@ -1,23 +1,20 @@
 package kr.co.jjjoonngg.dagger_sample_project.di
 
-import dagger.BindsInstance
 import dagger.Component
+import dagger.android.AndroidInjectionModule
+import dagger.android.AndroidInjector
 import kr.co.jjjoonngg.dagger_sample_project.App
-import kr.co.jjjoonngg.dagger_sample_project.main.MainActivityComponent
 import javax.inject.Singleton
 
 /*
 * Created by JJJoonngg
 */
 
-@Component(modules = [AppModule::class])
 @Singleton
-interface AppComponent {
-    fun mainActivityComponentBuilder(): MainActivityComponent.Builder
-    fun inject(app: App)
+@Component(modules = [AppModule::class, AndroidInjectionModule::class])
+interface AppComponent : AndroidInjector<App> {
 
     @Component.Factory
-    interface Factory {
-        fun create(@BindsInstance app: App, appModule: AppModule): AppComponent
+    interface Factory : AndroidInjector.Factory<App> {
     }
 }
