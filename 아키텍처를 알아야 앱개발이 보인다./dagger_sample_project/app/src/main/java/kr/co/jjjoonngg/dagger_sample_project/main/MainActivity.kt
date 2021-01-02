@@ -3,18 +3,13 @@ package kr.co.jjjoonngg.dagger_sample_project.main
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import dagger.android.AndroidInjection
-import dagger.android.AndroidInjector
-import dagger.android.DispatchingAndroidInjector
-import dagger.android.HasAndroidInjector
+import dagger.android.*
+import dagger.android.support.DaggerAppCompatActivity
 import kr.co.jjjoonngg.dagger_sample_project.R
 import javax.inject.Inject
 import javax.inject.Named
 
-class MainActivity : AppCompatActivity(), HasAndroidInjector {
-
-    @Inject
-    lateinit var androidInjector: DispatchingAndroidInjector<Any>
+class MainActivity : DaggerAppCompatActivity() {
 
     @Inject
     @Named("app")
@@ -33,9 +28,5 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector {
         supportFragmentManager.beginTransaction()
             .replace(R.id.container, MainFragment())
             .commit()
-    }
-
-    override fun androidInjector(): AndroidInjector<Any>? {
-        return androidInjector
     }
 }

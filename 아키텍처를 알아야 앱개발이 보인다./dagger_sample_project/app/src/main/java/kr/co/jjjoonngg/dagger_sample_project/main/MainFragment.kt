@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment
 import dagger.Module
 import dagger.Provides
 import dagger.android.support.AndroidSupportInjection
+import dagger.android.support.DaggerFragment
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Named
@@ -15,7 +16,7 @@ import javax.inject.Named
 * Created by JJJoonngg
 */
 
-class MainFragment : Fragment() {
+class MainFragment : DaggerFragment() {
 
     @Inject
     @Named("app")

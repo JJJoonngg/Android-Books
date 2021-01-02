@@ -4,6 +4,7 @@ import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.android.AndroidInjector
+import dagger.android.ContributesAndroidInjector
 import dagger.multibindings.ClassKey
 import dagger.multibindings.IntoMap
 import javax.inject.Named
@@ -12,13 +13,11 @@ import javax.inject.Named
 * Created by JJJoonngg
 */
 
-@Module(subcomponents = [MainFragmentSubcomponent::class])
+@Module
 abstract class MainActivityModule {
 
-    @Binds
-    @IntoMap
-    @ClassKey(MainFragment::class)
-    abstract fun bindInjectorFactory(factory: MainFragmentSubcomponent.Factory): AndroidInjector.Factory<*>
+    @ContributesAndroidInjector(modules = [MainFragmentModule::class])
+    abstract fun mainFragment(): MainFragment
 
     companion object {
         @Named("activity")
