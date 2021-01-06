@@ -1,6 +1,6 @@
 package kr.co.jjjoonngg.dagger_sample_project
 
-import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.core.*
 import org.junit.Test
 import org.reactivestreams.Publisher
 import java.util.concurrent.Callable
@@ -11,7 +11,7 @@ import java.util.concurrent.Executors
 */
 
 class ObservableCreateTest {
-    
+
     @Test
     fun observableOperator() {
         val source = Observable.create<String> { emitter ->
@@ -84,7 +84,7 @@ class ObservableCreateTest {
         C
          */
 
-        val callable = Callable(){
+        val callable = Callable() {
             return@Callable "Hello World"
         }
         Observable.fromCallable(callable).apply {
@@ -94,5 +94,67 @@ class ObservableCreateTest {
         결과
         Hello World
          */
+    }
+
+    @Test
+    fun singleTest() {
+        Single.just("Hello World")
+            .subscribe(System.out::println)
+
+        Single.create { emitter: SingleEmitter<Any?> -> emitter.onSuccess("Hello") }
+            .subscribe(System.out::println)
+    }
+
+    @Test
+    fun maybeTest() {
+        Maybe.create { emitter: MaybeEmitter<Any?> ->
+            emitter.onSuccess(100)
+            emitter.onComplete() // 무시됨
+        }.doOnSuccess { item: Any? -> println("doOnSuccess1") }
+            .doOnComplete { println("doOnComplete1") }
+            .subscribe(System.out::println)
+
+        Maybe.create { emitter: MaybeEmitter<Any?> ->
+            emitter.onComplete()
+        }.doOnSuccess { item: Any? -> println("doOnSuccess2") }
+            .doOnComplete { println("doOnComplete2") }
+            .subscribe(System.out::println)
+        /*결과
+        doOnSuccess1
+        100
+        doOnComplete2
+        */
+
+        val src1 = Observable.just(1, 2, 3)
+        val srcMaybe1 = src1.firstElement()
+        srcMaybe1.subscribe(System.out::println)
+
+        val src2 = Observable.empty<Int>()
+        val srcMaybe2 = src2.firstElement()
+        srcMaybe2.subscribe(
+            { x: Int? -> println(x) },
+            { throwable: Throwable? -> })
+        { println("onComplete!") }
+        /*결과
+        1
+        onComplete!
+        */
+    }
+
+    @Test
+    fun completableTest() {
+        Completable.create { emitter ->
+            //do something here
+            emitter.onComplete()
+        }.subscribe { println("completed1") }
+
+        Completable.fromRunnable {
+            //do something here
+        }.subscribe { println("completed2") }
+        /*
+        결과
+        completed1
+        completed2
+        */
     }
 }
