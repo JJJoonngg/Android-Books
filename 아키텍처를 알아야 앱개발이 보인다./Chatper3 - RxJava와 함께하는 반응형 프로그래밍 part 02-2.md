@@ -147,7 +147,165 @@ completed2
 */
 ```
 
+<br>
 
+<br>
+
+### Cold Observable vs Hot Observable
+
+- Cold Observable
+  - Observable에 구독을 요청하면 발행하기 시작.
+  - 아이템은 처음 부터 끝까지 발행되고, 임의로 종료시키지 않는 이상 여러 번 요청에도 처음부터 끝까지 발행 하는 것을 보장
+
+```kotlin
+@Test
+fun coldObservable() {
+    Observable.interval(1, TimeUnit.SECONDS).also {
+        it.subscribe { value -> println("#1 : $value") }
+        Thread.sleep(3000)
+        it.subscribe { value -> println("#2 : $value") }
+        Thread.sleep(3000)
+    }
+
+    /*
+    결과
+    #1 : 0
+    #1 : 1
+    #1 : 2
+    #1 : 3
+    #2 : 0
+    #1 : 4
+    #2 : 1
+    #1 : 5
+    #2 : 2
+     */
+}
+```
+
+Observable을 구독하고 3초 뒤에 새로운 구독자로 다시 구독 했을 때도 처음부터 다시 아이템을 발행하는 것을 확인 할 수 있음
+
+<br>
+
+- Hot Observable
+  - 아이템 발행이 시작된 이후로 모든 구독자에게 동시에 같은 아이템을 발행
+  - 브로드 캐스트 메시지를 글로벌하게 전송하는것 과 비슷
+  - 두개의 구독자가 같은 하나의 Observable 을 구독시, 두 구독자는 같은 아이템을 수신하지만  어느 하나의 구독자는 구독하기 전에 발행된 아이템을 놓칠 수 있다.
+
+<br>
+
+#### **publish 연산자와 connect 연산자**
+
+ConnectableObservable은 Hot Observable을 구현할 수 있도록 도와주는 타입
+
+아무런 Observable 타입이나 publish 연산자를 이용하여 간단히 Connectable Observable로 변환 가능
+
+ConnectableObservable은 구독을 요청해도 Observable은 데이터를 발행하지 않음
+
+- `connect()` 연산자를 호출할 때 비로소 아이템을 발행하기 시작
+
+```kotlin
+@Test
+fun connectableObservable() {
+    Observable.interval(1, TimeUnit.SECONDS).publish().also {
+        it.connect()
+        it.subscribe { value -> println("#1 : $value") }
+        Thread.sleep(3000)
+        it.subscribe { value -> println("#2 : $value") }
+        Thread.sleep(3000)
+    }
+    /*
+    결과
+    #1 : 0
+    #1 : 1
+    #1 : 2
+    #1 : 3
+    #2 : 3
+    #1 : 4
+    #2 : 4
+    #1 : 5
+    #2 : 5
+     */
+}
+```
+
+첫 번째 구독 시에 3초동안 0~2 발행하고, 3초뒤에는 두번째 구독자가 추가되었지만 0~2는 수신하지 못하고 3부터 수신하는 것을 확인할 수 있음
+
+<br>
+
+#### **autoConnect 연산자**
+
+connect 연산자를 호출하지 않더라도, 구독시에 즉각 아이템을 발행할 수 있도록 도와주는 연산자
+
+매개 변수는 아이템을 발행하는 구독자 수로 내부의 숫자 이상 붙어야 아이템을 발행하기 시작
+
+매개 변수로 0이하를 입력시 구독자 수와 관계없이 곧바로 아이템을 발행하기 시작
+
+매개 변수를 지정하지 않으면 `autoConnect(1)` 와 동일하게 동작, 구독하자마자 아이템을 발행하기 시작
+
+```kotlin
+@Test
+fun autoConnect() {
+    Observable.interval(100, TimeUnit.MILLISECONDS).publish().autoConnect(2).also {
+        it.subscribe { value -> println("A : $value") }
+        it.subscribe { value -> println("B : $value") }
+        Thread.sleep(500)
+    }
+    /*
+    결과
+    A : 0
+    B : 0
+    A : 1
+    B : 1
+    A : 2
+    B : 2
+    A : 3
+    B : 3
+    A : 4
+    B : 4
+     */
+}
+```
+
+<br>
+
+#### **Disposable 다루기**
+
+subscribe() 메서드를 호출함면 Disposable 객체를 반환
+
+유한한 아이템을 발행하는 Observable의 경우 `onComplete()` 의 호출로 안전하게 종료
+
+무한하게 아이템을 발행하거나 오랫동안 실행되는 경우 구독이 필요하지 않은 경우가 생길 시 메모리 누수 방지를 위해 명시적인 폐기(dispose)가 필요
+
+`Disposable.dispose()` 메서드 호출시 언제든지 아이템 발행 중단 가능
+
+Observable을 `dispose()` 하면 아이템의 발행이 중지되고 모든 리소스가 폐기됨
+
+리소스가 폐기되었는지 확인하는 데 `Disposable.dispose()` 메서드를 활용할 수 있으며, `dispose()` 내부에서 폐기 여부를 체크하므로 `isDispose()` 의 결과를 확인하고 `dispose()` 를 호출할 필요는 없음
+
+`onComplete()` 를 명시적으로 호출하거나 호출됨이 보장된다면 `dispose()` 를 호출할 필요는 없음
+
+<br>
+
+#### **CompositeDisposable**
+
+여러 곳에 있는 구독자를 한꺼번에 폐기할 수 있다.
+
+```kotlin
+@Test
+fun compositeDisposable() {
+    val source = Observable.interval(1000, TimeUnit.MILLISECONDS)
+
+    val d1 = source.subscribe(System.out::println)
+    val d2 = source.subscribe(System.out::println)
+    val d3 = source.subscribe(System.out::println)
+    val cd = CompositeDisposable()
+    cd.addAll(d1,d2,d3)
+}
+```
 
 ---
+
+
+
+
 
