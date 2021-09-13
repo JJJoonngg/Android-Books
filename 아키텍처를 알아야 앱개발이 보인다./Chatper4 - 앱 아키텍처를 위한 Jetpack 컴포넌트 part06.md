@@ -115,6 +115,18 @@ PagedList에서 페이징 된 데이터를 표시하는 RecyclerView.Adapter 기
 
 <br>
 
+## **DataSource 종류 선택하기**
+
+#### 해당 부분은 스스로 공부할 때 정리한 개인 블로그 주소를 참조한다.
+
+- 블로그 주소 : https://jjjoonngg.github.io/aac/AAC-Paging/#datasource
+
+<br>
+
+<br>
+
+<br>
+
 ### **로컬 데이터베이스 페이징 구현 예제**
 
 Room에서는 Integer 타입을 키로 갖는 DataSource.Factory를 지원한다.
@@ -179,5 +191,108 @@ class UserActivity : AppCompatActivity() {
 
 ViewModel에 있는 사용자 목록 LiveData를 구독하고 데이터가 발행 되었을 때 PagedList Adapter의 `submitList` 메서드를 통해 사용자 목록 데이터를 전달할 수 있다.
 
+<br>
+
+<br>
+
+### **네트워크 페이징 구현 예제**
+
+> https://jsonplaceholder.typicode.com 에서 제공하는 더미데이터를 사용한 예제
+
+<br>
+
+> Retrofit 을 사용하여 데이터 불러오는 예제 
+
+```kotlin
+interface PostService{
+  @GET("posts")
+  fun getPost(@Query("_page") page:Int):Call<List<Post>>
+  
+  @GET("posts?_page=1")
+  fun getTopPosts():Call<List<Post>>
+}
+```
+
+<br>
+
+> PostService 를 이용한 DataSource
+
+```kotlin
+class PostDataSource : PagedKeyedDataSource<Int, Post>{
+ 	private lateinit	var postService:PostService
+  
+ 	fun init(postService:PostService){
+    this.postService = postService
+  }
+  
+  fun loadInitial(
+    params:LoadInitialParams<Int>, callback:LoadInitialCallback<Int, Post>
+  ){
+    val requset:Call<List<Post>> = postService.getTopPosts()
+    
+    try{
+      val response:Response<List<Post>> = request.execute()
+      val items:List<Post> = response.body()
+      val nextPage:Int = getNextPage(response)
+      callback.onResult(items, null, nextPage)
+    }catch(e:IOException){
+      e.printStackTrace()
+    }
+  }
+  
+  
+  override fun loadBefore(
+    params:LoadParama<Int>, callback:LoadCallback<Int, Post>
+  ){
+    //do Nothing
+  }
+  
+  override fun loadAfter(
+    params:LoadParama<Int>, callback:LoadCallback<Int, Post>
+  ){
+    val request:Call<List<Post>> = postService.getPosts(params.key)
+    
+    try{
+      val response:Response<List<Post>> = request.execute()
+      val items:List<Post> = response.body()
+      val nextPage:Int = getNextPage(response)
+      callback.onResult(items, nextPage)
+    }catch(e:IOException){
+      e.printStackTrace()
+    }
+  }
+  
+  private fun getNextPage(response:Response<List<Post>>):Int{
+    ...
+  }
+}
+```
+
+`loadInitial()` 메서드로부터 초기 데이터를 로드 및 이전, 다음 페이지 키를 지정
+
+사용자 스크롤에 맞춰 `loadBefore()` or `loadAfter()` 가 호출되는데 쵝 데이터를 불러올 떄와 마찬가지로, 키를 지정해야함
+
+<br>
+
+> PostDataSource 를 생성하는 팩토리 클래스
+
+```kotlin
+class PostDataSourceFactory:DataSource.Factory<Int, Post>{
+ 	private lateinit	var postService:PostService
+  
+ 	fun init(postService:PostService){
+    this.postService = postService
+  }
+  
+  override fun create():DataSource<Int, Post>= PostDataSource(postService)
+}
+```
+
+<br>
+
+<br>
+
 ---
+
+
 
