@@ -6,12 +6,12 @@ import android.widget.TextView
 import kotlinx.coroutines.*
 import org.w3c.dom.Element
 import org.w3c.dom.Node
-import java.util.Collections.emptyList
 import javax.xml.parsers.DocumentBuilderFactory
 
 class MainActivity : AppCompatActivity() {
     private val netDispatcher = newSingleThreadContext(name = "ServiceCall")
     private val factory = DocumentBuilderFactory.newInstance()
+    private val dispatcher = newFixedThreadPoolContext(2, "IO")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -20,31 +20,44 @@ class MainActivity : AppCompatActivity() {
         asyncLoadNews()
     }
 
-    private fun asyncLoadNews(dispatcher: CoroutineDispatcher = netDispatcher) =
+    @ExperimentalCoroutinesApi
+    private fun asyncLoadNews() =
         GlobalScope.launch(dispatcher) {
-            val headlines = fetchRssHeadlines()
-            val newsCount = findViewById<TextView>(R.id.newsCount)
+            val requests = mutableListOf<Deferred<List<String>>>()
 
+            val feeds = listOf(
+                "https://www.npr.org/rss/rss.php?id=1001",
+                "http://rss.cnn.com/rss/cnn_topstories.rss",
+                "http://feeds.foxnews.com/foxnews/politics?format=xml"
+            )
+
+            feeds.mapTo(requests) {
+                asyncFetchHeadlines(it, dispatcher)
+            }
+
+            requests.forEach {
+                it.await()
+            }
+
+            val headlines = requests.flatMap {
+                it.getCompleted()
+            }
+            val newsCount = findViewById<TextView>(R.id.newsCount)
             launch(Dispatchers.Main) {
-                newsCount.text = "Found ${headlines.size} News"
+                newsCount.text = "Found ${headlines.size} News" +
+                        "in ${requests.size} feeds"
             }
         }
 
-    private fun loadNews() {
-        val headlines = fetchRssHeadlines()
-        val newsCount = findViewById<TextView>(R.id.newsCount)
-
-        GlobalScope.launch(Dispatchers.Main) {
-            newsCount.text = "Found ${headlines.size} News"
-        }
-    }
-
-    private fun fetchRssHeadlines(): List<String> {
+    private fun asyncFetchHeadlines(
+        feed: String,
+        dispatcher: CoroutineDispatcher
+    ) = GlobalScope.async(dispatcher) {
         val builder = factory.newDocumentBuilder()
-        val xml = builder.parse("https://www.npr.org/rss/rss.php?id=1001")
+        val xml = builder.parse(feed)
         val news = xml.getElementsByTagName("channel").item(0)
 
-        return (0 until news.childNodes.length)
+        (0 until news.childNodes.length)
             .map { news.childNodes.item(it) }
             .filter { Node.ELEMENT_NODE == it.nodeType }
             .map { it as Element }
