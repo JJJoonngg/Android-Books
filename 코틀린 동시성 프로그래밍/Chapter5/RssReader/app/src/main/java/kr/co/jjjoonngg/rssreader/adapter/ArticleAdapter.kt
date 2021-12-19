@@ -5,6 +5,10 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kr.co.jjjoonngg.rssreader.R
 import kr.co.jjjoonngg.rssreader.model.Article
 
@@ -12,8 +16,16 @@ import kr.co.jjjoonngg.rssreader.model.Article
 * Created by JJJoonngg
 */
 
-class ArticleAdapter : RecyclerView.Adapter<ArticleAdapter.ViewHolder>() {
+interface ArticleLoader {
+    suspend fun loadMore()
+}
+
+class ArticleAdapter(
+    private val loader: ArticleLoader
+) : RecyclerView.Adapter<ArticleAdapter.ViewHolder>() {
+
     private val articles: MutableList<Article> = mutableListOf()
+    private var loading = false
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val layout = LayoutInflater.from(parent.context)
@@ -27,6 +39,16 @@ class ArticleAdapter : RecyclerView.Adapter<ArticleAdapter.ViewHolder>() {
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val article = articles[position]
+
+        //request more articles[position]
+        if (!loading && position >= articles.size - 2) {
+            loading = true
+
+            CoroutineScope(Dispatchers.IO).launch {
+                loader.loadMore()
+                loading = false
+            }
+        }
 
         holder.feed.text = article.feed
         holder.title.text = article.title
