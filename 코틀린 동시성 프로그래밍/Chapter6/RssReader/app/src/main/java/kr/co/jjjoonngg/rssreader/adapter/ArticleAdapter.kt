@@ -1,5 +1,6 @@
 package kr.co.jjjoonngg.rssreader.adapter
 
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.LinearLayout
@@ -20,10 +21,7 @@ interface ArticleLoader {
     suspend fun loadMore()
 }
 
-class ArticleAdapter(
-    private val loader: ArticleLoader
-) : RecyclerView.Adapter<ArticleAdapter.ViewHolder>() {
-
+class ArticleAdapter : RecyclerView.Adapter<ArticleAdapter.ViewHolder>() {
     private val articles: MutableList<Article> = mutableListOf()
     private var loading = false
 
@@ -40,16 +38,6 @@ class ArticleAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val article = articles[position]
 
-        //request more articles[position]
-        if (!loading && position >= articles.size - 2) {
-            loading = true
-
-            CoroutineScope(Dispatchers.IO).launch {
-                loader.loadMore()
-                loading = false
-            }
-        }
-
         holder.feed.text = article.feed
         holder.title.text = article.title
         holder.summary.text = article.summary
@@ -57,8 +45,15 @@ class ArticleAdapter(
 
     override fun getItemCount() = articles.size
 
-    fun add(articles: List<Article>) {
-        this.articles.addAll(articles)
+    @SuppressLint("NotifyDataSetChanged")
+    fun add(article: Article) {
+        this.articles.add(article)
+        notifyDataSetChanged()
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    fun clear(){
+        this.articles.clear()
         notifyDataSetChanged()
     }
 

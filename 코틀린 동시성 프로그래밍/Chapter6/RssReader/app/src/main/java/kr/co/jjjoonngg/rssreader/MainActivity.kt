@@ -14,7 +14,6 @@ import kr.co.jjjoonngg.rssreader.producer.ArticleProducer
 
 class MainActivity : AppCompatActivity(), ArticleLoader {
     private lateinit var articles: RecyclerView
-    private lateinit var viewAdapter: ArticleAdapter
     private lateinit var viewManager: RecyclerView.LayoutManager
 
     @ObsoleteCoroutinesApi
@@ -24,10 +23,8 @@ class MainActivity : AppCompatActivity(), ArticleLoader {
         setContentView(R.layout.activity_main)
 
         viewManager = LinearLayoutManager(this)
-        viewAdapter = ArticleAdapter(this)
         articles = findViewById<RecyclerView>(R.id.articles).apply {
             layoutManager = viewManager
-            adapter = viewAdapter
         }
 
         Log.d("TAG_A", "onCreate Called, and binding done")
@@ -38,6 +35,7 @@ class MainActivity : AppCompatActivity(), ArticleLoader {
         }
     }
 
+    @ExperimentalCoroutinesApi
     override suspend fun loadMore() {
         val producer = ArticleProducer.producer
 
@@ -47,7 +45,6 @@ class MainActivity : AppCompatActivity(), ArticleLoader {
 
             CoroutineScope(Dispatchers.Main).launch {
                 findViewById<ProgressBar>(R.id.progressBar).visibility = View.GONE
-                viewAdapter.add(articles)
                 Log.d("TAG_A", "Test for the load")
             }
         }
