@@ -4,15 +4,16 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import kr.co.jjjoonngg.rssreader.adapter.ArticleAdapter
+import kr.co.jjjoonngg.rssreader.search.ResultsCounter
 import kr.co.jjjoonngg.rssreader.search.Searcher
 
+@ObsoleteCoroutinesApi
+@ExperimentalCoroutinesApi
 class SearchActivity : AppCompatActivity() {
 
     private lateinit var articles: RecyclerView
@@ -35,8 +36,13 @@ class SearchActivity : AppCompatActivity() {
         findViewById<Button>(R.id.searchButton).setOnClickListener {
             viewAapter.clear()
             CoroutineScope(Dispatchers.Default).launch {
+                ResultsCounter.reset()
                 search()
             }
+        }
+
+        CoroutineScope(Dispatchers.Default).launch {
+            updateCounter()
         }
     }
 
@@ -52,6 +58,18 @@ class SearchActivity : AppCompatActivity() {
                 viewAapter.add(article)
             }
         }
+    }
 
+    private suspend fun updateCounter() {
+        val notifications = ResultsCounter.getNotificationChannel()
+        val results = findViewById<TextView>(R.id.searchResult)
+
+        while (!notifications.isClosedForReceive) {
+            val newAmount = notifications.receive()
+
+            withContext(Dispatchers.Main) {
+                results.text = "Results : $newAmount"
+            }
+        }
     }
 }
